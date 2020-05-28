@@ -1,4 +1,3 @@
-
 #!groovy
 //  groovy Jenkinsfile
 properties([disableConcurrentBuilds()])
