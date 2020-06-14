@@ -21,30 +21,15 @@ if($_SERVER["REQUEST_METHOD"]=="POST")
     $image = "uploads/".$image.".jpg";
     $path = $_SERVER['DOCUMENT_ROOT'] . '/'. $image;
 
-    if(isset($_POST["submit"])) {
-        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-        if($check !== false) {
-            if($check[1]<=300) {
-                $error="Фото замале !";
-                $uploadOk = 0;
-            }elseif ($check[0]<=300){
-                $error="Фото замале !";
-                $uploadOk = 0;
-            }
-            else{
-                $uploadOk = 1;
-            }
+    $targetImgSize = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+    if($targetImgSize[1] <= 300 && $targetImgSize[0]<=300){
+        $error="Фото замале !";
+    }
+        if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $path)) {
+            echo "Файл корректен и был успешно загружен.\n";
         } else {
-            $error="File is not an image.";
-            $uploadOk = 0;
+            echo "Возможная атака с помощью файловой загрузки!\n";
         }
-    }
-
-    if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $path)) {
-        echo "Файл корректен и был успешно загружен.\n";
-    } else {
-        echo "Возможная атака с помощью файловой загрузки!\n";
-    }
 
 
     $uppercase = preg_match('@[A-Z]@', $password);
