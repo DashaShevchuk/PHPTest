@@ -21,6 +21,25 @@ if($_SERVER["REQUEST_METHOD"]=="POST")
     $image = "uploads/".$image.".jpg";
     $path = $_SERVER['DOCUMENT_ROOT'] . '/'. $image;
 
+    if(isset($_POST["submit"])) {
+        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+        if($check !== false) {
+            if($check[1]<=300) {
+                $error="Фото замале !";
+                $uploadOk = 0;
+            }elseif ($check[0]<=300){
+                $error="Фото замале !";
+                $uploadOk = 0;
+            }
+            else{
+                $uploadOk = 1;
+            }
+        } else {
+            $error="File is not an image.";
+            $uploadOk = 0;
+        }
+    }
+
     if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $path)) {
         echo "Файл корректен и был успешно загружен.\n";
     } else {
@@ -71,6 +90,8 @@ else{
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <script src="https://kit.fontawesome.com/279e8c03ce.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.6/cropper.css" integrity="sha256-jKV9n9bkk/CTP8zbtEtnKaKf+ehRovOYeKoyfthwbC8=" crossorigin="anonymous" />
     <title>Document</title>
 </head>
 <body>
@@ -125,26 +146,77 @@ else{
         </form>
     </div>
 </div>
+
+<script src="node_modules/jquery/dist/jquery.min.js" />
+<script src="node_modules/popper.js/dist/popper.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<?php include_once("services/cropper.php");?>
+
+<?php include_once "scripts.php" ?>
+<script src="node_modules/cropperjs/dist/cropper.min.js"></script>
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
-    (function() {
-        'use strict';
-        window.addEventListener('load', function() {
-            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-            var forms = document.getElementsByClassName('needs-validation');
-            // Loop over them and prevent submission
-            var validation = Array.prototype.filter.call(forms, function(form) {
-                form.addEventListener('submit', function(event) {
-                    if (form.checkValidity() === false) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
-            });
-        }, false);
-    })();
+
+    $(function() {
+
+        let dialogCropper = $("#cropperModal");
+        $("#fileToUpload").on("change", function() {
+            //console.log("----select file------", this.files);
+            //this.files;
+            if (this.files && this.files.length) {
+                let file = this.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    //cropper.destroy();
+                    //$('#modalImg').attr('src', e.target.result);
+                    dialogCropper.modal('show');
+                    cropper.replace(e.target.result);
+
+                }
+                reader.readAsDataURL(file);
+
+            }
+        });
+
+        const image = document.getElementById('modalImg');
+        var lastValidCrop = null;
+        const cropper = new Cropper(image, {
+            aspectRatio: 1/1,
+            viewMode: 1,
+            autoCropArea: 1.5,
+            crop(e) {
+                var validCrop = true;
+                if (e.detail.width < 300) validCrop = false;
+                if (e.detail.height < 300) validCrop = false;
+
+                if (validCrop) {
+                    lastValidCrop = cropper.getData();
+                    $("#crop_photo_x").val(e.detail.x);
+                    $("#crop_photo_y").val(e.detail.y);
+                    $("#crop_photo_width").val(e.detail.width);
+                    $("#crop_photo_height").val(e.detail.height);
+                } else {
+                    cropper.setData(lastValidCrop);
+                }
+            },
+        });
+
+        $("#rotateImg").on("click",function (e) {
+            cropper.rotate(90);
+        });
+
+        $("#croppImg").on("click", function (e) {
+            e.preventDefault();
+
+            var imgContent = cropper.getCroppedCanvas().toDataURL();
+
+
+            $("#h").val(imgContent);
+            $("#output").attr("src", imgContent);
+            dialogCropper.modal('hide');
+        });
+
+    });
+
 </script>
-<?php include_once("scripts.php"); ?>
 </body>
 </html>
